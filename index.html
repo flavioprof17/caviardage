@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Caviardage Digitale — Officina di Poesia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3e9d2;
+    --paper-deep:#e8dcbe;
+    --ink:#2a201a;
+    --ink-soft:#5a4a3a;
+    --accent:#8b3a2f;
+    --shadow: 0 4px 14px rgba(60,40,20,.18), 0 18px 40px rgba(60,40,20,.12);
+    --p1:#1a1612;  /* nero */
+    --p2:#b8342a;  /* rosso */
+    --p3:#2a4a8a;  /* blu */
+    --p4:#3d7a3d;  /* verde */
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:'Special Elite','Courier Prime',monospace;
+    color:var(--ink);
+    background:#d9c9a6;
+    background-image:
+      radial-gradient(ellipse at top left, rgba(255,240,200,.4), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(120,80,40,.15), transparent 60%);
+    min-height:100vh;
+    overflow-x:hidden;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  /* texture carta antica via noise SVG */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18 0 0 0 0 0.13 0 0 0 0 0.08 0 0 0 0.18 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>");
+    mix-blend-mode:multiply;opacity:.45;
+  }
+
+  .stage{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:28px 22px 60px}
+
+  /* HEADER stile testata di giornale antico */
+  header{
+    text-align:center;padding:18px 0 8px;border-bottom:3px double var(--ink);
+    margin-bottom:22px;position:relative;
+  }
+  header::before, header::after{
+    content:"✶";position:absolute;top:50%;transform:translateY(-50%);
+    font-size:18px;color:var(--ink-soft);
+  }
+  header::before{left:8px}
+  header::after{right:8px}
+  .kicker{
+    font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:.4em;
+    text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;
+  }
+  h1{
+    font-family:'IM Fell English',serif;font-style:italic;font-weight:400;
+    font-size:clamp(32px,6vw,52px);letter-spacing:.02em;line-height:1;
+  }
+  .subtitle{
+    font-family:'Special Elite',monospace;font-size:13px;color:var(--ink-soft);
+    margin-top:8px;letter-spacing:.08em;
+  }
+
+  /* ISTRUZIONI semplificate per Federico */
+  .istruzioni{
+    background:rgba(255,250,235,.55);
+    border:1.5px dashed var(--ink-soft);
+    padding:14px 18px;margin:22px 0;border-radius:2px;
+    font-family:'Courier Prime',monospace;font-size:15px;line-height:1.6;
+    text-transform:uppercase;letter-spacing:.05em;
+  }
+  .istruzioni strong{color:var(--accent)}
+  .istruzioni .step{display:flex;gap:10px;align-items:flex-start;margin:4px 0}
+  .istruzioni .num{
+    background:var(--ink);color:var(--paper);width:22px;height:22px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:13px;flex-shrink:0;font-weight:700;
+  }
+
+  /* SELETTORE TESTI */
+  .toolbar{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;
+    margin:18px 0;padding:14px;
+    background:rgba(255,245,225,.4);border:1px solid rgba(60,40,20,.15);
+  }
+  .toolbar-label{
+    font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--ink-soft);margin-right:6px;
+  }
+  .text-tab{
+    font-family:'Special Elite',monospace;font-size:14px;
+    background:var(--paper);border:2px solid var(--ink);
+    padding:8px 16px;cursor:pointer;letter-spacing:.05em;
+    transition:all .15s ease;color:var(--ink);
+    box-shadow:2px 2px 0 var(--ink);
+  }
+  .text-tab:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+  .text-tab.active{background:var(--ink);color:var(--paper);transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+
+  /* PALETTE PENNARELLI */
+  .palette{
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;
+    margin:18px 0;padding:16px;
+    background:rgba(255,245,225,.4);border:1px solid rgba(60,40,20,.15);
+  }
+  .marker{
+    width:48px;height:48px;border-radius:50%;cursor:pointer;
+    border:3px solid rgba(60,40,20,.3);
+    transition:transform .15s ease;
+    box-shadow:0 4px 10px rgba(0,0,0,.25), inset 0 -10px 14px rgba(0,0,0,.3), inset 0 4px 6px rgba(255,255,255,.15);
+    position:relative;
+  }
+  /* punta del pennarello al centro */
+  .marker::after{
+    content:"";position:absolute;top:50%;left:50%;
+    width:14px;height:14px;border-radius:50%;
+    background:radial-gradient(circle, rgba(0,0,0,.4) 0%, transparent 70%);
+    transform:translate(-50%,-50%);
+  }
+  .marker:hover{transform:translateY(-3px) scale(1.05)}
+  .marker.active{
+    border-color:var(--ink);transform:translateY(-4px) scale(1.12);
+    box-shadow:0 8px 18px rgba(0,0,0,.35), inset 0 -10px 14px rgba(0,0,0,.3), inset 0 4px 6px rgba(255,255,255,.2);
+  }
+  .marker.active::before{
+    content:"✔";position:absolute;top:-10px;right:-10px;
+    background:var(--paper);color:var(--ink);font-weight:700;font-size:14px;
+    width:24px;height:24px;border-radius:50%;border:2px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.2);
+  }
+
+  /* FOGLIO DI CARTA — il testo */
+  .paper{
+    background:var(--paper);
+    background-image:
+      linear-gradient(180deg, rgba(120,80,40,.05) 0%, transparent 8%, transparent 92%, rgba(120,80,40,.08) 100%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.28 0 0 0 0 0.18 0 0 0 0.12 0'/></filter><rect width='100%25' height='100%25' filter='url(%23p)'/></svg>");
+    padding:48px 44px;
+    border:1px solid rgba(60,40,20,.2);
+    box-shadow:var(--shadow), inset 0 0 30px rgba(180,140,90,.18);
+    position:relative;
+    transform:rotate(-.3deg);
+    margin:24px auto;
+    max-width:780px;
+    min-height:320px;
+  }
+  .paper::before{
+    content:"";position:absolute;top:14px;left:14px;right:14px;bottom:14px;
+    border:1px solid rgba(60,40,20,.12);pointer-events:none;
+  }
+  /* angoli "ingialliti" */
+  .paper::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(circle at 0 0, rgba(120,80,30,.18), transparent 80px),
+      radial-gradient(circle at 100% 0, rgba(120,80,30,.15), transparent 90px),
+      radial-gradient(circle at 0 100%, rgba(120,80,30,.18), transparent 100px),
+      radial-gradient(circle at 100% 100%, rgba(120,80,30,.15), transparent 80px);
+  }
+
+  .text-title{
+    font-family:'IM Fell English',serif;font-style:italic;font-size:22px;
+    text-align:center;margin-bottom:20px;color:var(--ink);
+    border-bottom:1px solid rgba(60,40,20,.3);padding-bottom:10px;
+    letter-spacing:.04em;
+  }
+
+  .text-content{
+    font-family:'Special Elite',monospace;
+    font-size:22px;line-height:2.1;
+    color:var(--ink);
+    text-align:left;
+    word-spacing:.1em;
+    position:relative;z-index:2;
+  }
+
+  .word{
+    display:inline-block;padding:2px 4px;margin:1px 0;
+    cursor:pointer;position:relative;border-radius:2px;
+    transition:background .1s ease;
+    touch-action:none;
+  }
+  .word:hover:not(.redacted){
+    background:rgba(139,58,47,.1);
+  }
+  .word.redacted{
+    position:relative;
+    /* il testo resta visibile: la striscia copre solo il centro */
+  }
+  .word.redacted::after{
+    content:"";
+    position:absolute;
+    left:-4px;right:-4px;
+    top:50%;
+    height:0.62em;
+    transform:translateY(-50%);
+    background:var(--mark, #1a1612);
+    pointer-events:none;
+    z-index:2;
+    /* bordo irregolare di pennarello: ondulato sopra e sotto, con qualche "macchia" */
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 30' preserveAspectRatio='none'><path d='M1,7 Q14,3 32,6 T68,5 T108,9 T148,4 T182,7 T199,6 L199,23 Q184,27 158,24 T118,26 T78,22 T38,25 T8,23 L1,23 Z' fill='black'/><ellipse cx='28' cy='15' rx='4' ry='1.6' fill='black' opacity='0.75'/><ellipse cx='102' cy='15' rx='5' ry='1.7' fill='black' opacity='0.75'/><ellipse cx='168' cy='15' rx='4' ry='1.6' fill='black' opacity='0.75'/></svg>");
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 30' preserveAspectRatio='none'><path d='M1,7 Q14,3 32,6 T68,5 T108,9 T148,4 T182,7 T199,6 L199,23 Q184,27 158,24 T118,26 T78,22 T38,25 T8,23 L1,23 Z' fill='black'/><ellipse cx='28' cy='15' rx='4' ry='1.6' fill='black' opacity='0.75'/><ellipse cx='102' cy='15' rx='5' ry='1.7' fill='black' opacity='0.75'/><ellipse cx='168' cy='15' rx='4' ry='1.6' fill='black' opacity='0.75'/></svg>");
+    -webkit-mask-size:100% 100%;mask-size:100% 100%;
+    -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+    animation:redactIn .25s ease-out;
+  }
+  @keyframes redactIn{
+    from{transform:translateY(-50%) scaleX(.6);opacity:0}
+    to{transform:translateY(-50%) scaleX(1);opacity:1}
+  }
+
+  /* PULSANTI AZIONE */
+  .actions{
+    display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:28px;
+  }
+  .btn{
+    font-family:'Special Elite',monospace;font-size:15px;
+    padding:14px 26px;border:2px solid var(--ink);background:var(--paper);
+    cursor:pointer;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink);box-shadow:3px 3px 0 var(--ink);
+    transition:all .15s ease;
+  }
+  .btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+  .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+  .btn-primary{background:var(--ink);color:var(--paper)}
+  .btn-primary:hover{background:var(--accent);border-color:var(--accent);box-shadow:5px 5px 0 var(--ink)}
+  .btn-ghost{background:transparent;border-style:dashed}
+
+  /* MODAL POESIA */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(40,28,18,.82);z-index:100;
+    display:none;align-items:center;justify-content:center;padding:20px;
+    backdrop-filter:blur(4px);
+  }
+  .modal-bg.show{display:flex;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+  .modal-paper{
+    background:var(--paper);
+    background-image:
+      linear-gradient(180deg, rgba(120,80,40,.06) 0%, transparent 10%, transparent 90%, rgba(120,80,40,.1) 100%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.28 0 0 0 0 0.18 0 0 0 0.14 0'/></filter><rect width='100%25' height='100%25' filter='url(%23m)'/></svg>");
+    padding:50px 44px 40px;max-width:620px;width:100%;
+    box-shadow:0 30px 80px rgba(0,0,0,.5), inset 0 0 40px rgba(180,140,90,.2);
+    position:relative;transform:rotate(.4deg);max-height:90vh;overflow-y:auto;
+    border:1px solid rgba(60,40,20,.3);
+  }
+  .modal-paper::before{
+    content:"";position:absolute;top:14px;left:14px;right:14px;bottom:14px;
+    border:1px solid rgba(60,40,20,.15);pointer-events:none;
+  }
+  .modal-kicker{
+    font-size:11px;letter-spacing:.4em;text-transform:uppercase;
+    text-align:center;color:var(--ink-soft);margin-bottom:8px;
+  }
+  .modal-title{
+    font-family:'IM Fell English',serif;font-style:italic;font-size:34px;
+    text-align:center;margin-bottom:6px;color:var(--ink);
+  }
+  .modal-divider{
+    text-align:center;color:var(--ink-soft);margin:14px 0 28px;letter-spacing:.5em;
+  }
+  .poem-text{
+    font-family:'Special Elite',monospace;font-size:22px;line-height:2.2;
+    text-align:center;color:var(--ink);min-height:80px;
+    white-space:pre-wrap;word-wrap:break-word;
+  }
+  .poem-text .pword{
+    display:inline-block;margin:0 .25em;
+    opacity:0;transform:translateY(8px);
+    animation:reveal .5s ease forwards;
+  }
+  @keyframes reveal{to{opacity:1;transform:translateY(0)}}
+  .poem-empty{
+    font-family:'IM Fell English',serif;font-style:italic;color:var(--ink-soft);
+    font-size:18px;text-align:center;
+  }
+  .modal-actions{
+    display:flex;gap:10px;justify-content:center;margin-top:30px;flex-wrap:wrap;
+  }
+
+  /* TEXTAREA testo libero */
+  .input-label{
+    display:block;font-family:'Courier Prime',monospace;font-size:12px;
+    letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft);
+    margin:14px 0 6px;
+  }
+  .text-input, .title-input{
+    width:100%;font-family:'Special Elite',monospace;
+    background:rgba(255,250,235,.6);
+    border:1.5px solid rgba(60,40,20,.35);
+    color:var(--ink);padding:12px 14px;outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+    user-select:text;-webkit-user-select:text;
+  }
+  .text-input{
+    font-size:17px;line-height:1.7;min-height:160px;resize:vertical;
+  }
+  .title-input{font-size:18px}
+  .text-input:focus, .title-input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(139,58,47,.15);
+  }
+  .input-hint{
+    font-family:'IM Fell English',serif;font-style:italic;font-size:13px;
+    color:var(--ink-soft);margin-top:6px;
+  }
+  .signature{
+    text-align:right;font-family:'IM Fell English',serif;font-style:italic;
+    font-size:14px;color:var(--ink-soft);margin-top:18px;
+  }
+
+  /* COUNTER */
+  .counter{
+    text-align:center;font-size:12px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--ink-soft);margin-top:14px;
+  }
+  .counter strong{color:var(--accent);font-size:14px}
+
+  /* FOOTER firma */
+  footer{
+    text-align:center;margin-top:50px;padding-top:24px;
+    border-top:1px solid rgba(60,40,20,.25);
+  }
+  .stamp{
+    display:inline-block;padding:10px 24px;
+    border:2px solid var(--accent);color:var(--accent);
+    font-family:'IM Fell English',serif;font-style:italic;font-size:18px;
+    transform:rotate(-3deg);letter-spacing:.05em;
+    background:rgba(243,166,160,.08);
+  }
+  .stamp small{
+    display:block;font-family:'Courier Prime',monospace;font-size:9px;
+    letter-spacing:.4em;text-transform:uppercase;font-style:normal;margin-top:2px;
+  }
+
+  /* TOAST */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120%);
+    background:var(--ink);color:var(--paper);padding:14px 24px;
+    font-family:'Special Elite',monospace;font-size:14px;letter-spacing:.08em;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:200;
+    transition:transform .3s ease;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:600px){
+    .paper{padding:32px 22px}
+    .text-content{font-size:19px;line-height:2}
+    .modal-paper{padding:36px 24px 30px}
+    .modal-title{font-size:26px}
+    .poem-text{font-size:18px}
+    .marker{width:40px;height:40px}
+    h1{font-size:34px}
+  }
+
+  /* SEZIONE STAMPA — visibile solo su carta */
+  .print-only{display:none}
+  .print-poem{
+    margin-top:30px;padding:24px;
+    border-top:2px dashed var(--ink);
+    text-align:center;
+  }
+  .print-poem-title{
+    font-family:'IM Fell English',serif;font-style:italic;font-size:22px;
+    margin-bottom:14px;
+  }
+  .print-poem-content{
+    font-family:'Special Elite',monospace;font-size:18px;line-height:2;
+  }
+
+  @media print{
+    @page{ size: A4; margin: 1.2cm; }
+    body{
+      background:white !important;
+      color:black !important;
+    }
+    body::before{ display:none !important; }
+    /* nascondi tutto tranne il foglio e la firma */
+    header, .istruzioni, .toolbar, .palette, .actions,
+    .counter, .modal-bg, .toast{
+      display:none !important;
+    }
+    .stage{padding:0;max-width:100%}
+    .paper{
+      transform:none !important;
+      box-shadow:none !important;
+      border:1px solid #999 !important;
+      background:white !important;
+      page-break-inside:avoid;
+      margin:0 0 16px 0 !important;
+      padding:24px !important;
+      max-width:100% !important;
+    }
+    .paper::before, .paper::after{display:none !important}
+    .text-content{font-size:16px !important;line-height:1.9 !important}
+    /* mantieni le cancellature visibili in stampa */
+    .word.redacted::after{
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
+    .print-only{display:block !important}
+    footer{
+      border-top:1px solid #999 !important;margin-top:20px;padding-top:12px;
+      page-break-inside:avoid;
+    }
+    .stamp{
+      transform:none !important;border-color:#666 !important;color:#444 !important;
+      background:transparent !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <header>
+    <div class="kicker">— Officina di Poesia №3 —</div>
+    <h1>Caviardage Digitale</h1>
+    <div class="subtitle">Cancella le parole. Scopri la poesia nascosta.</div>
+  </header>
+
+  <div class="istruzioni">
+    <div class="step"><span class="num">1</span><span>SCEGLI UN PENNARELLO COLORATO</span></div>
+    <div class="step"><span class="num">2</span><span>TOCCA LE PAROLE CHE VUOI <strong>CANCELLARE</strong></span></div>
+    <div class="step"><span class="num">3</span><span>LE PAROLE RIMASTE FORMERANNO LA <strong>TUA POESIA</strong></span></div>
+  </div>
+
+  <!-- Selettore testi -->
+  <div class="toolbar">
+    <span class="toolbar-label">Testo</span>
+    <button class="text-tab active" data-text="0">① Il Mare</button>
+    <button class="text-tab" data-text="1">② La Città</button>
+    <button class="text-tab" data-text="2">③ Il Bosco</button>
+    <button class="text-tab" id="customTab" data-text="custom">✎ Testo Libero</button>
+  </div>
+
+  <!-- Palette pennarelli -->
+  <div class="palette">
+    <span class="toolbar-label">Pennarello</span>
+    <div class="marker active" data-color="#1a1612" style="background:#1a1612" title="Nero"></div>
+    <div class="marker" data-color="#b8342a" style="background:#b8342a" title="Rosso"></div>
+    <div class="marker" data-color="#2a4a8a" style="background:#2a4a8a" title="Blu"></div>
+    <div class="marker" data-color="#3d7a3d" style="background:#3d7a3d" title="Verde"></div>
+  </div>
+
+  <!-- Foglio con il testo -->
+  <div class="paper">
+    <div class="text-title" id="textTitle">Il Mare</div>
+    <div class="text-content" id="textContent"></div>
+  </div>
+
+  <div class="counter">Parole cancellate: <strong id="redactedCount">0</strong></div>
+
+  <!-- Sezione visibile SOLO in stampa: poesia ritrovata -->
+  <div class="print-only print-poem">
+    <div class="print-poem-title">~ Poesia Ritrovata ~</div>
+    <div class="print-poem-content" id="printPoem"></div>
+  </div>
+
+  <!-- Pulsanti azione -->
+  <div class="actions">
+    <button class="btn btn-primary" id="revealBtn">✦ Rivela la Poesia ✦</button>
+    <button class="btn" id="printBtn">⎙ Stampa</button>
+    <button class="btn btn-ghost" id="resetBtn">↺ Ricomincia</button>
+  </div>
+
+  <footer>
+    <div class="stamp">
+      Prof. Flavio
+    </div>
+  </footer>
+
+</div>
+
+<!-- MODAL TESTO LIBERO -->
+<div class="modal-bg" id="customModal">
+  <div class="modal-paper">
+    <div class="modal-kicker">— Officina del Poeta —</div>
+    <div class="modal-title">Il Tuo Testo</div>
+    <div class="modal-divider">· · ·</div>
+
+    <label class="input-label" for="customTitle">Titolo</label>
+    <input type="text" class="title-input" id="customTitle" placeholder="Es. La mia giornata" maxlength="60">
+
+    <label class="input-label" for="customBody">Testo da cancellare</label>
+    <textarea class="text-input" id="customBody" placeholder="Incolla o scrivi qui il tuo testo…&#10;&#10;Poi premi CARICA NEL FOGLIO e potrai cancellare le parole per creare la tua poesia."></textarea>
+    <div class="input-hint">Suggerimento: testi di 3-5 frasi funzionano meglio.</div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="loadCustomBtn">✓ Carica nel Foglio</button>
+      <button class="btn" id="cancelCustomBtn">✕ Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POESIA -->
+<div class="modal-bg" id="modal">
+  <div class="modal-paper">
+    <div class="modal-kicker">— La tua creazione —</div>
+    <div class="modal-title">Poesia Ritrovata</div>
+    <div class="modal-divider">· · ·</div>
+    <div class="poem-text" id="poemText"></div>
+    <div class="signature">~ poesia di un giovane poeta ~</div>
+    <div class="modal-actions">
+      <button class="btn" id="copyBtn">⎘ Copia</button>
+      <button class="btn btn-primary" id="closeBtn">✕ Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copiato!</div>
+
+<script>
+  // ─── TESTI ────────────────────────────────────────────────
+  const TESTI = [
+    {
+      title: "Il Mare",
+      body: "Le onde corrono veloci sulla sabbia dorata. Il sole brilla forte nel cielo azzurro. I gabbiani volano leggeri sopra le barche colorate. Un bambino raccoglie conchiglie piccole sulla riva bagnata. Il vento porta lontano le risate dei nuotatori felici."
+    },
+    {
+      title: "La Città di Notte",
+      body: "Le luci della città accendono le strade buie. Le finestre brillano come stelle dentro le case. Una macchina passa veloce sotto la pioggia leggera. Il vento muove le foglie degli alberi nel parco silenzioso. La luna guarda dall'alto i tetti addormentati."
+    },
+    {
+      title: "Il Bosco",
+      body: "Gli alberi alti coprono il sentiero stretto e fresco. Le foglie cadono lente sopra il terreno morbido. Uno scoiattolo corre veloce tra i rami verdi. Il fiume canta una musica antica tra le pietre lisce. Il sole filtra timido dentro il bosco profondo."
+    }
+  ];
+
+  // ─── STATO ────────────────────────────────────────────────
+  let currentText = 0;
+  let currentColor = "#1a1612";
+  let isDragging = false;
+  let dragMode = null; // 'redact' o 'restore'
+
+  // ─── ELEMENTI ─────────────────────────────────────────────
+  const textContent = document.getElementById('textContent');
+  const textTitle   = document.getElementById('textTitle');
+  const counter     = document.getElementById('redactedCount');
+  const modal       = document.getElementById('modal');
+  const poemText    = document.getElementById('poemText');
+  const toast       = document.getElementById('toast');
+  const printPoem   = document.getElementById('printPoem');
+
+  // ─── SALVATAGGIO AUTOMATICO ──────────────────────────────
+  const STORAGE_KEY = 'caviardage_v1';
+  // states: per ogni testo memorizzo {redacted: [idx,...], colors: {idx:color}}
+  let savedStates = {};
+  let customText = null;
+
+  function saveState(){
+    try{
+      // aggiorno lo stato del testo corrente prima di salvare
+      const key = String(currentText);
+      const reds = [];
+      const cols = {};
+      textContent.querySelectorAll('.word.redacted').forEach(w => {
+        const i = w.dataset.idx;
+        reds.push(parseInt(i));
+        cols[i] = w.style.getPropertyValue('--mark') || currentColor;
+      });
+      savedStates[key] = { redacted: reds, colors: cols };
+
+      const payload = {
+        customText,
+        savedStates,
+        currentText,
+        selectedColor: currentColor
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch(e){ /* localStorage non disponibile, ignora */ }
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    } catch(e){ return null; }
+  }
+
+  function applySavedRedactions(key){
+    const state = savedStates[String(key)];
+    if(!state) return;
+    state.redacted.forEach(i => {
+      const word = textContent.querySelector(`.word[data-idx="${i}"]`);
+      if(word){
+        word.classList.add('redacted');
+        const c = state.colors[String(i)] || currentColor;
+        word.style.setProperty('--mark', c);
+      }
+    });
+    updateCounter();
+  }
+
+  // ─── RENDER TESTO ─────────────────────────────────────────
+  function renderText(idx){
+    currentText = idx;
+    textTitle.textContent = TESTI[idx].title;
+    const words = TESTI[idx].body.split(/\s+/);
+    textContent.innerHTML = words.map((w,i) =>
+      `<span class="word" data-idx="${i}">${w}</span>`
+    ).join(' ');
+    applySavedRedactions(idx);
+    updateCounter();
+    saveState();
+  }
+
+  // ─── INTERAZIONE PAROLE (mouse + touch unificato) ─────────
+  function toggleWord(el, forceMode){
+    if(!el || !el.classList || !el.classList.contains('word')) return;
+    const isRedacted = el.classList.contains('redacted');
+
+    if(forceMode === 'redact' && isRedacted) return;
+    if(forceMode === 'restore' && !isRedacted) return;
+
+    if(isRedacted){
+      el.classList.remove('redacted');
+      el.style.removeProperty('--mark');
+    } else {
+      el.classList.add('redacted');
+      el.style.setProperty('--mark', currentColor);
+    }
+    updateCounter();
+    saveState();
+  }
+
+  function getWordAtPoint(x,y){
+    const el = document.elementFromPoint(x,y);
+    return el && el.classList && el.classList.contains('word') ? el : null;
+  }
+
+  // POINTER START
+  textContent.addEventListener('pointerdown', e => {
+    const el = e.target.closest('.word');
+    if(!el) return;
+    e.preventDefault();
+    isDragging = true;
+    dragMode = el.classList.contains('redacted') ? 'restore' : 'redact';
+    toggleWord(el);
+    // catturo il puntatore per drag fluido
+    try { textContent.setPointerCapture(e.pointerId); } catch(_){}
+  });
+
+  // POINTER MOVE — supporta drag/swipe per cancellare più parole
+  textContent.addEventListener('pointermove', e => {
+    if(!isDragging) return;
+    const el = getWordAtPoint(e.clientX, e.clientY);
+    if(el) toggleWord(el, dragMode);
+  });
+
+  // POINTER END
+  const endDrag = e => {
+    isDragging = false;
+    dragMode = null;
+    try { textContent.releasePointerCapture(e.pointerId); } catch(_){}
+  };
+  textContent.addEventListener('pointerup', endDrag);
+  textContent.addEventListener('pointercancel', endDrag);
+  textContent.addEventListener('pointerleave', endDrag);
+
+  // ─── COUNTER ──────────────────────────────────────────────
+  function updateCounter(){
+    counter.textContent = textContent.querySelectorAll('.word.redacted').length;
+  }
+
+  // ─── SELETTORE TESTI ──────────────────────────────────────
+  const customModal  = document.getElementById('customModal');
+  const customTitle  = document.getElementById('customTitle');
+  const customBody   = document.getElementById('customBody');
+
+  document.querySelectorAll('.text-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.text;
+
+      // Tab "Testo Libero": apri sempre il modal di input
+      if(target === 'custom'){
+        // Se c'è già un testo custom caricato, lo precompilo per modifiche rapide
+        if(customText){
+          customTitle.value = customText.title;
+          customBody.value  = customText.body;
+        }
+        customModal.classList.add('show');
+        setTimeout(() => customBody.focus(), 100);
+        return;
+      }
+
+      // Tab testi precaricati
+      document.querySelectorAll('.text-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderText(parseInt(target));
+    });
+  });
+
+  // ─── CARICA TESTO LIBERO ──────────────────────────────────
+  document.getElementById('loadCustomBtn').addEventListener('click', () => {
+    const body = customBody.value.trim();
+    if(!body){
+      showToast('Scrivi prima un testo!');
+      customBody.focus();
+      return;
+    }
+    const title = customTitle.value.trim() || 'Il Mio Testo';
+    // se cambia il testo custom, azzero le sue cancellature precedenti
+    const isNewText = !customText || customText.body !== body;
+    customText = { title, body };
+    if(isNewText) delete savedStates['custom'];
+
+    document.querySelectorAll('.text-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('customTab').classList.add('active');
+
+    renderCustomText();
+    customModal.classList.remove('show');
+    showToast('Testo caricato!');
+  });
+
+  document.getElementById('cancelCustomBtn').addEventListener('click', () => {
+    customModal.classList.remove('show');
+  });
+  customModal.addEventListener('click', e => {
+    if(e.target === customModal) customModal.classList.remove('show');
+  });
+
+  function renderCustomText(){
+    currentText = 'custom';
+    textTitle.textContent = customText.title;
+    const words = customText.body.split(/\s+/).filter(Boolean);
+    textContent.innerHTML = words.map((w,i) =>
+      `<span class="word" data-idx="${i}">${w}</span>`
+    ).join(' ');
+    applySavedRedactions('custom');
+    updateCounter();
+    saveState();
+  }
+
+  // ─── PALETTE PENNARELLI ───────────────────────────────────
+  document.querySelectorAll('.marker').forEach(m => {
+    m.addEventListener('click', () => {
+      document.querySelectorAll('.marker').forEach(x => x.classList.remove('active'));
+      m.classList.add('active');
+      currentColor = m.dataset.color;
+      saveState();
+    });
+  });
+
+  // ─── RIVELA POESIA ────────────────────────────────────────
+  document.getElementById('revealBtn').addEventListener('click', () => {
+    const survivors = Array.from(textContent.querySelectorAll('.word'))
+      .filter(w => !w.classList.contains('redacted'))
+      .map(w => w.textContent);
+
+    if(survivors.length === 0){
+      poemText.innerHTML = '<div class="poem-empty">Nessuna parola rimasta!<br>Riprova a cancellarne meno…</div>';
+    } else if(survivors.length === Array.from(textContent.querySelectorAll('.word')).length){
+      poemText.innerHTML = '<div class="poem-empty">Devi prima cancellare<br>qualche parola…</div>';
+    } else {
+      // Animo l'apparizione parola per parola
+      poemText.innerHTML = survivors.map((w,i) =>
+        `<span class="pword" style="animation-delay:${i*0.08}s">${w}</span>`
+      ).join('');
+    }
+    modal.classList.add('show');
+  });
+
+  // ─── COPIA POESIA ─────────────────────────────────────────
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const survivors = Array.from(textContent.querySelectorAll('.word'))
+      .filter(w => !w.classList.contains('redacted'))
+      .map(w => w.textContent)
+      .join(' ');
+    if(!survivors){ showToast('Niente da copiare'); return; }
+
+    // Fallback robusto per copia testo
+    const ta = document.createElement('textarea');
+    ta.value = survivors;
+    ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Poesia copiata!'); }
+    catch(_){ showToast('Copia non disponibile'); }
+    document.body.removeChild(ta);
+  });
+
+  // ─── CHIUDI MODAL ─────────────────────────────────────────
+  document.getElementById('closeBtn').addEventListener('click', () => modal.classList.remove('show'));
+  modal.addEventListener('click', e => { if(e.target === modal) modal.classList.remove('show'); });
+
+  // ─── RESET ────────────────────────────────────────────────
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if(confirm('Vuoi davvero ricominciare da capo?')){
+      delete savedStates[String(currentText)];
+      if(currentText === 'custom' && customText){
+        renderCustomText();
+      } else {
+        renderText(currentText);
+      }
+    }
+  });
+
+  // ─── TOAST ────────────────────────────────────────────────
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  // ─── STAMPA ───────────────────────────────────────────────
+  document.getElementById('printBtn').addEventListener('click', () => {
+    // popolo la sezione poesia per la stampa
+    const survivors = Array.from(textContent.querySelectorAll('.word'))
+      .filter(w => !w.classList.contains('redacted'))
+      .map(w => w.textContent)
+      .join(' ');
+
+    if(!survivors || survivors === Array.from(textContent.querySelectorAll('.word')).map(w=>w.textContent).join(' ')){
+      printPoem.textContent = '(la poesia apparirà qui dopo aver cancellato qualche parola)';
+    } else {
+      printPoem.textContent = survivors;
+    }
+    setTimeout(() => window.print(), 100);
+  });
+
+  // ─── INIT ─────────────────────────────────────────────────
+  (function init(){
+    const saved = loadState();
+    if(saved){
+      if(saved.savedStates) savedStates = saved.savedStates;
+      if(saved.customText) customText = saved.customText;
+      if(saved.selectedColor){
+        currentColor = saved.selectedColor;
+        document.querySelectorAll('.marker').forEach(m => {
+          m.classList.toggle('active', m.dataset.color === currentColor);
+        });
+      }
+      // ripristino il testo che stavo lavorando
+      if(saved.currentText === 'custom' && customText){
+        document.querySelectorAll('.text-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('customTab').classList.add('active');
+        renderCustomText();
+        return;
+      }
+      if(typeof saved.currentText === 'number' && TESTI[saved.currentText]){
+        document.querySelectorAll('.text-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.text-tab[data-text="${saved.currentText}"]`).classList.add('active');
+        renderText(saved.currentText);
+        return;
+      }
+    }
+    renderText(0);
+  })();
+</script>
+
+</body>
+</html>
